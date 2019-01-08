@@ -23,6 +23,7 @@ static Class imageManagerClass = nil;
 @property (nonatomic, assign, readwrite) BOOL       isLandspace;
 @property (nonatomic, assign, readwrite) UIDeviceOrientation currentOrientation;
 
+@property (nonatomic, strong) UIView *backgroundView;
 @property (nonatomic, strong) UIScrollView *photoScrollView;
 
 @property (nonatomic, strong) NSMutableArray *visiblePhotoViews;
@@ -137,7 +138,7 @@ static Class imageManagerClass = nil;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     // 设置UI
     [self setupUI];
     
@@ -190,9 +191,15 @@ static Class imageManagerClass = nil;
 
 - (void)setupUI {
     [self.navigationController setNavigationBarHidden:YES];
-    
-    self.view.backgroundColor   = self.bgColor ? : [UIColor blackColor];
-    
+
+    self.view.backgroundColor = [UIColor clearColor];
+
+    UIView *backgroundView = [[UIView alloc] initWithFrame:self.view.bounds];
+    [self.view addSubview:backgroundView];
+    backgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    backgroundView.backgroundColor = self.bgColor ? : [UIColor blackColor];
+    self.backgroundView = backgroundView;
+
     CGFloat width  = self.view.bounds.size.width;
     CGFloat height = self.view.bounds.size.height;
     BOOL isLandspace = width > height;
@@ -307,7 +314,7 @@ static Class imageManagerClass = nil;
 }
 
 - (void)browserPushShow {
-    self.view.backgroundColor = self.bgColor ? : [UIColor blackColor];
+    self.backgroundView.alpha = 1.f;
     self.isShow = YES;
     
     [[self currentPhotoView] setupPhoto:[self currentPhoto]];
@@ -349,7 +356,7 @@ static Class imageManagerClass = nil;
     
     [UIView animateWithDuration:kAnimationDuration animations:^{
         photoView.imageView.frame = endRect;
-        self.view.backgroundColor = self.bgColor ? : [UIColor blackColor];
+        self.backgroundView.alpha = 1.f;
     }completion:^(BOOL finished) {
         self.isShow = YES;
         [photoView setupPhoto:photo];
@@ -452,6 +459,7 @@ static Class imageManagerClass = nil;
         [vc.navigationController pushViewController:self animated:YES];
     }else {
         self.modalPresentationCapturesStatusBarAppearance = YES;
+        self.modalPresentationStyle = UIModalPresentationOverFullScreen;
         [vc presentViewController:self animated:NO completion:nil];
     }
 }
@@ -672,7 +680,7 @@ static Class imageManagerClass = nil;
             
             photoView.imageView.frame = CGRectMake(x, y, width, height);
 
-            self.view.backgroundColor = self.bgColor ? [self.bgColor colorWithAlphaComponent:percent] : [[UIColor blackColor] colorWithAlphaComponent:percent];
+            self.backgroundView.alpha = percent;
         }
             break;
         case UIGestureRecognizerStateEnded:
@@ -703,8 +711,8 @@ static Class imageManagerClass = nil;
         case UIGestureRecognizerStateChanged:{
             photoView.imageView.transform = CGAffineTransformMakeTranslation(0, point.y);
             double percent = 1 - fabs(point.y) / self.view.frame.size.height * 0.5;
-            
-            self.view.backgroundColor = self.bgColor ? [self.bgColor colorWithAlphaComponent:percent] : [[UIColor blackColor] colorWithAlphaComponent:percent];
+
+            self.backgroundView.alpha = percent;
         }
             break;
         case UIGestureRecognizerStateEnded:
@@ -815,7 +823,7 @@ static Class imageManagerClass = nil;
     
     [UIView animateWithDuration:kAnimationDuration animations:^{
         photoView.imageView.frame = sourceRect;
-        self.view.backgroundColor = [UIColor clearColor];
+        self.backgroundView.alpha = 0.f;
     }completion:^(BOOL finished) {
         [self dismissAnimated:NO];
         
@@ -835,7 +843,7 @@ static Class imageManagerClass = nil;
     
     [UIView animateWithDuration:kAnimationDuration animations:^{
         photoView.imageView.transform = CGAffineTransformMakeTranslation(0, toTranslationY);
-        self.view.backgroundColor = [UIColor clearColor];
+        self.backgroundView.alpha = 0.f;
     }completion:^(BOOL finished) {
         [self dismissAnimated:YES];
         
@@ -854,7 +862,7 @@ static Class imageManagerClass = nil;
         }else {
             photoView.imageView.transform = CGAffineTransformIdentity;
         }
-        self.view.backgroundColor = self.bgColor ? : [UIColor blackColor];
+        self.backgroundView.alpha = 1.f;
     }completion:^(BOOL finished) {
         
         if (!self.isStatusBarShowing) {
